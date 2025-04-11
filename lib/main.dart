@@ -59,6 +59,7 @@ class VoteScreenState extends State<VoteScreen> {
     getStatistics();
   }
 
+  //move rest api related staff to client class
   dynamic addCandidate(String firstName, String lastName, String number) async {
     await http.post(
       Uri.parse(candidatesUrl),
