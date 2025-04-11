@@ -17,6 +17,7 @@ void main() {
   ));
 }
 
+//todo move screen to separate file
 class VoteScreen extends StatefulWidget {
   const VoteScreen({super.key, required this.title});
 
