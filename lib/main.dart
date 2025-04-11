@@ -27,6 +27,7 @@ class VoteScreen extends StatefulWidget {
   State<VoteScreen> createState() => VoteScreenState();
 }
 
+//todo make private (name should start with _)
 class VoteScreenState extends State<VoteScreen> {
   String selectedElectorId = '';
   String selectedElectionLocationId = '';
