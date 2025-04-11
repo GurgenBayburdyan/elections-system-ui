@@ -1,3 +1,4 @@
+//move this to dto folder
 class ElectionLocation {
   final int id;
   final String address;

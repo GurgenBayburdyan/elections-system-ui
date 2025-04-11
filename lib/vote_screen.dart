@@ -1,11 +1,6 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
-import 'Candidate.dart';
-import 'ElectionLocation.dart';
-import 'Elector.dart';
-
+import 'Clients.dart';
 
 class VoteScreen extends StatefulWidget {
   const VoteScreen({super.key, required this.title});
@@ -21,18 +16,6 @@ class _VoteScreenState extends State<VoteScreen> {
   String selectedElectionLocationId = '';
   String selectedCandidateId = '';
 
-  List<Elector> electors = [];
-  List<ElectionLocation> electionLocations = [];
-  List<Candidate> candidates = [];
-
-  var statistics = {};
-
-  String electorsUrl = "http://localhost:8080/electors";
-  String electionLocationsUrl = "http://localhost:8080/electionLocation";
-  String candidatesUrl = "http://localhost:8080/candidates";
-  String statisticsUrl = "http://localhost:8080/statistics";
-  String votesUrl = "http://localhost:8080/votes";
-
   TextEditingController passportController = TextEditingController();
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
@@ -43,120 +26,8 @@ class _VoteScreenState extends State<VoteScreen> {
   @override
   void initState() {
     super.initState();
-    getAll();
-    getStatistics();
-  }
-
-  dynamic addCandidate(String firstName, String lastName, String number) async {
-    await http.post(
-      Uri.parse(candidatesUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: json.encode(
-          {'firstName': firstName, 'lastName': lastName, 'number': number}),
-    );
-  }
-
-  dynamic findElectorByPassportNumber(String passportNumber) async {
-    final electorResponse =
-        await http.get(Uri.parse('$electorsUrl/$passportNumber'));
-    final electorData = jsonDecode(electorResponse.body);
-    int electorId = electorData['id'];
-    return electorId;
-  }
-
-  dynamic vote(String passportNumber, String electionLocationId,
-      String candidateId) async {
-    int electorId = await findElectorByPassportNumber(passportNumber);
-
-    await http.post(
-      Uri.parse(votesUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'electorId': electorId,
-        'electionLocationId': int.parse(electionLocationId),
-        'candidateId': int.parse(candidateId)
-      }),
-    );
-  }
-
-  dynamic addElector(String firstName, String lastName, String passportNumber,
-      String dateOfBirth) async {
-    DateTime date = DateTime.parse(dateOfBirth);
-    String dateTime = date.toIso8601String();
-
-    await http.post(
-      Uri.parse(electorsUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({
-        'firstName': firstName,
-        'lastName': lastName,
-        'passportNumber': passportNumber,
-        'dateOfBirth': dateTime,
-      }),
-    );
-  }
-
-  dynamic addElectionLocation(String address) async {
-    await http.post(
-      Uri.parse(electionLocationsUrl),
-      headers: <String, String>{
-        'Content-Type': 'application/json',
-      },
-      body: json.encode({'address': address}),
-    );
-  }
-
-  getAll() async {
-    final electorsResponse = await http.get(Uri.parse(electorsUrl));
-    final electionLocationsResponse =
-        await http.get(Uri.parse(electionLocationsUrl));
-    final candidatesResponse = await http.get(Uri.parse(candidatesUrl));
-
-    setState(() {
-      electors = List<Elector>.from(
-        json
-            .decode(electorsResponse.body)
-            .map((data) => Elector.fromJson(data)),
-      );
-      electionLocations = List<ElectionLocation>.from(
-        json
-            .decode(electionLocationsResponse.body)
-            .map((data) => ElectionLocation.fromJson(data)),
-      );
-      candidates = List<Candidate>.from(
-        json
-            .decode(candidatesResponse.body)
-            .map((data) => Candidate.fromJson(data)),
-      );
-    });
-  }
-
-  getStatistics() async {
-    final statisticsResponse = await http.get(Uri.parse(statisticsUrl));
-    setState(() {
-      var data = jsonDecode(statisticsResponse.body);
-
-      Map<String, dynamic> statisticsData = data['statistics'];
-
-      Map<int, Map<int, double>> statisticsMap = {};
-
-      statisticsData.forEach((k1, k2) {
-        Map<int, double> candidateStatistics = {};
-        (k2 as Map<String, dynamic>).forEach((innerKey, value) {
-          candidateStatistics[int.parse(innerKey)] = (value as num).toDouble();
-        });
-        statisticsMap[int.parse(k1)] = candidateStatistics;
-      });
-
-      statistics = statisticsMap;
-      print(statistics);
-    });
+    Clients.getAll();
+    Clients.getStatistics();
   }
 
   @override
@@ -169,14 +40,15 @@ class _VoteScreenState extends State<VoteScreen> {
       body: Center(
         child: SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 400),
+            constraints: const BoxConstraints(maxWidth: 700),
             child: ListView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              itemCount: statistics.length,
+              itemCount: Clients.statistics.length,
               itemBuilder: (context, index) {
-                var electionLocationId = statistics.keys.elementAt(index);
-                var candidatesData = statistics[electionLocationId]!;
+                var electionLocationId =
+                    Clients.statistics.keys.elementAt(index);
+                var candidatesData = Clients.statistics[electionLocationId]!;
 
                 return Card(
                   elevation: 4,
@@ -195,7 +67,7 @@ class _VoteScreenState extends State<VoteScreen> {
                           ),
                         ),
                         const SizedBox(height: 8),
-                        ...candidates.map((candidate) {
+                        ...Clients.candidates.map((candidate) {
                           var percentage = candidatesData[candidate.id] ?? 0.0;
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -289,7 +161,7 @@ class _VoteScreenState extends State<VoteScreen> {
   }
 
   void showVoteDialog() {
-    getAll();
+    Clients.getAll();
 
     showDialog(
       context: context,
@@ -301,7 +173,7 @@ class _VoteScreenState extends State<VoteScreen> {
           elevation: 10,
           backgroundColor: Colors.white,
           child: Container(
-            width: 300,
+            width: 350,
             padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -351,7 +223,7 @@ class _VoteScreenState extends State<VoteScreen> {
                       selectedElectionLocationId = value!;
                     });
                   },
-                  items: electionLocations.map((location) {
+                  items: Clients.electionLocations.map((location) {
                     return DropdownMenuItem<String>(
                       value: location.id.toString(),
                       child: Text(location.address,
@@ -377,7 +249,7 @@ class _VoteScreenState extends State<VoteScreen> {
                       selectedCandidateId = value!;
                     });
                   },
-                  items: candidates.map((candidate) {
+                  items: Clients.candidates.map((candidate) {
                     return DropdownMenuItem<String>(
                       value: candidate.id.toString(),
                       child: Text(
@@ -397,11 +269,11 @@ class _VoteScreenState extends State<VoteScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    vote(passportController.text, selectedElectionLocationId,
-                        selectedCandidateId);
-                    getAll();
-                    getStatistics();
+                  onPressed: () async {
+                    Clients.vote(passportController.text,
+                        selectedElectionLocationId, selectedCandidateId);
+                    await Clients.getAll();
+                    await Clients.getStatistics();
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
@@ -426,7 +298,7 @@ class _VoteScreenState extends State<VoteScreen> {
   }
 
   void showCandidateDialog() {
-    getAll();
+    Clients.getAll();
 
     showDialog(
       context: context,
@@ -506,10 +378,10 @@ class _VoteScreenState extends State<VoteScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    addCandidate(firstNameController.text,
+                    Clients.addCandidate(firstNameController.text,
                         lastNameController.text, numberController.text);
-                    getAll();
-                    getStatistics();
+                    Clients.getAll();
+                    Clients.getStatistics();
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
@@ -534,7 +406,7 @@ class _VoteScreenState extends State<VoteScreen> {
   }
 
   void showElectionLocationDialog() {
-    getAll();
+    Clients.getAll();
 
     showDialog(
       context: context,
@@ -588,9 +460,9 @@ class _VoteScreenState extends State<VoteScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    addElectionLocation(addressController.text);
-                    getAll();
-                    getStatistics();
+                    Clients.addElectionLocation(addressController.text);
+                    Clients.getStatistics();
+                    Clients.getAll();
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
@@ -615,7 +487,7 @@ class _VoteScreenState extends State<VoteScreen> {
   }
 
   void showElectorDialog() {
-    getAll();
+    Clients.getAll();
 
     showDialog(
       context: context,
@@ -708,13 +580,13 @@ class _VoteScreenState extends State<VoteScreen> {
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: () {
-                    addElector(
+                    Clients.addElector(
                         firstNameController.text,
                         lastNameController.text,
                         passportController.text,
                         dateOfBirthController.text);
-                    getAll();
-                    getStatistics();
+                    Clients.getAll();
+                    Clients.getStatistics();
                     Navigator.of(context).pop();
                   },
                   style: ElevatedButton.styleFrom(
