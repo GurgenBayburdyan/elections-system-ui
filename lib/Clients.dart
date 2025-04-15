@@ -6,13 +6,17 @@ import 'Candidate.dart';
 import 'ElectionLocation.dart';
 import 'Elector.dart';
 
+//todo you should have the same naming as you have in backend. e.g. if you have UserController, here you should have UserClient
 class Clients{
 
+  // remove all static keywords from everwhere in this class
+  // each method should make an http call and return e.g candidates, so there is no need to keep them here
   static List<Elector> electors = [];
   static List<ElectionLocation> electionLocations = [];
   static List<Candidate> candidates = [];
   static var statistics = {};
 
+  
   static String electorsUrl = "http://localhost:8080/electors";
   static String electionLocationsUrl = "http://localhost:8080/electionLocation";
   static String candidatesUrl = "http://localhost:8080/candidates";
@@ -82,6 +86,9 @@ class Clients{
     );
   }
 
+  //todo the method should return list of Candidaes.
+  //todo create response dto classes, as you have in backend, and write json parsing login there as factory methods.
+  //e.g GetAllElectoresResponseDto.fromJson(...)
   static getAll() async {
     final electorsResponse = await http.get(Uri.parse(electorsUrl));
     final electionLocationsResponse =
