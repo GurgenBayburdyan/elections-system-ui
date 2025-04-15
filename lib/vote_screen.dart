@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'Clients.dart';
 
+//todo create screens folder and move this to there
 class VoteScreen extends StatefulWidget {
   const VoteScreen({super.key, required this.title});
 
@@ -16,6 +17,8 @@ class _VoteScreenState extends State<VoteScreen> {
   String selectedElectionLocationId = '';
   String selectedCandidateId = '';
 
+  //todo could be final _passportController = TextEditingController();
+  //todo make fields private
   TextEditingController passportController = TextEditingController();
   TextEditingController firstNameController = TextEditingController();
   TextEditingController lastNameController = TextEditingController();
